@@ -1,0 +1,63 @@
+{
+  "migration_date": "2026-08-07",
+  "source_branch": "main",
+  "source_head": "8354919ddff2eed44fff99a6f2abf7c9d78654d5",
+  "method": "byte-preserving git mv",
+  "recovery": "Every original path remains available from source_head and the untouched source clone.",
+  "moved": [
+    {
+      "from": "array/26 Remove Duplicates from Sorted Array.cpp",
+      "to": "problems/0026-remove-duplicates-from-sorted-array/solution.cpp",
+      "sha256": "06f52dfde43c774729132ef72a91ecdb92962fbe683ce79963ca357616cf4c05"
+    },
+    {
+      "from": "array/27 Remove Element.cpp",
+      "to": "problems/0027-remove-element/solution.cpp",
+      "sha256": "485bf852a2c5f607a668a4ae3cddd96547d1fc221d5d94f000a6929394647eb7"
+    },
+    {
+      "from": "array/35 Search Insert Position.cpp",
+      "to": "problems/0035-search-insert-position/solution.cpp",
+      "sha256": "ad95b8981b0f2a551811d16d4d53dc8bbc16bbf7ae38e5c100abbc15a7430678"
+    },
+    {
+      "from": "array/59 Spiral Matrix II.cpp",
+      "to": "problems/0059-spiral-matrix-ii/solution.cpp",
+      "sha256": "455563f3b0ea54ebecb7236f0568d1b7b9ae82c6b5c42898f73fa5206a8ecf3b"
+    },
+    {
+      "from": "linkedlist/203 Remove the linked list element.cpp",
+      "to": "problems/0203-remove-linked-list-elements/solution.cpp",
+      "sha256": "1813ce0682b974d2cd70702da37dc75f6702a383eea0382d4750c4cba86c4821"
+    },
+    {
+      "from": "array/209 Minimum Size Subarray Sum.cpp",
+      "to": "problems/0209-minimum-size-subarray-sum/solution.cpp",
+      "sha256": "01a7c240eccbafc4081e634889f394438658200e5a3a53a71be19de00dd4ff41"
+    },
+    {
+      "from": "array/704 binary search.cpp",
+      "to": "problems/0704-binary-search/solution.cpp",
+      "sha256": "7c04ad3f348cb9815b92ff1bca2a5d43c8a62926c859444fa6685d9411e93260"
+    },
+    {
+      "from": "array/977 Squares of a Sorted Array.cpp",
+      "to": "problems/0977-squares-of-a-sorted-array/solution.cpp",
+      "sha256": "f21e7a4b86cc8797df419b13bf59d5c291dda62be0f8cc5254178911127392bd"
+    }
+  ],
+  "removed_empty_placeholders": [
+    {
+      "path": "dp/70.cpp",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "introduced_by": "442cd87fbcf5bcdc069db72fbcd9675b1480a55e"
+    },
+    {
+      "path": "graph/200.cpp",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "introduced_by": "442cd87fbcf5bcdc069db72fbcd9675b1480a55e"
+    }
+  ]
+}

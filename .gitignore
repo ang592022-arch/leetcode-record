@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.p12
+*.pfx
+credentials.json
+service-account.json
+cookies*.txt
+cookies*.json
+*.session
+.leetcode-session*
+
+# Optional local inbox; pass it explicitly with --source.
+incoming/
+.leetcode-inbox/

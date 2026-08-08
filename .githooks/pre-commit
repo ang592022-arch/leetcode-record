@@ -1,0 +1,35 @@
+#!/bin/sh
+set -eu
+
+repo_root=$(git rev-parse --show-toplevel)
+cd "$repo_root"
+
+run_python() {
+    if command -v python >/dev/null 2>&1; then
+        python "$@"
+    elif command -v py >/dev/null 2>&1; then
+        py -3 "$@"
+    else
+        echo "pre-commit: Python 3 is required" >&2
+        return 1
+    fi
+}
+
+run_python scripts/leetcode_repo.py guard-solutions
+run_python scripts/leetcode_repo.py scan --staged
+
+if ! git diff --quiet -- metadata/problems.json README.md ':(glob)problems/**/README.md'; then
+    echo "pre-commit: metadata/README files have unstaged changes; stage a consistent generated set" >&2
+    exit 1
+fi
+untracked_generated=$(git ls-files --others --exclude-standard -- README.md ':(glob)problems/**/README.md')
+if [ -n "$untracked_generated" ]; then
+    echo "pre-commit: generated README files are untracked; generate and stage them first" >&2
+    printf '%s\n' "$untracked_generated" >&2
+    exit 1
+fi
+
+run_python scripts/leetcode_repo.py generate --check
+git diff --cached --check -- . \
+    ':(exclude)problems/**/solution.*' \
+    ':(exclude)problems/**/submissions/**'

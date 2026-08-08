@@ -1,0 +1,48 @@
+name: Organize LeetHub submissions
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: leethub-organize-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  organize:
+    if: >-
+      github.ref == 'refs/heads/main' &&
+      github.actor != 'github-actions[bot]' &&
+      !contains(github.event.head_commit.message || '', '[skip leetcode-organize]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the pushed branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.x'
+
+      - name: Configure automation identity and upstream
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git branch --set-upstream-to="origin/${GITHUB_REF_NAME}" "${GITHUB_REF_NAME}"
+
+      - name: Organize, validate, commit, and push safely
+        run: >-
+          python scripts/leetcode_repo.py sync
+          --no-pull
+          --source .
+          --consume
+          --message "chore: organize LeetHub submissions [skip leetcode-organize]"

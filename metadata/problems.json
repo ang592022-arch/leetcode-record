@@ -1,0 +1,245 @@
+{
+  "schema_version": 1,
+  "problems": [
+    {
+      "id": 26,
+      "slug": "remove-duplicates-from-sorted-array",
+      "title": "Remove Duplicates from Sorted Array",
+      "title_zh": "删除有序数组中的重复项",
+      "difficulty": "Easy",
+      "topics": ["Array", "Two Pointers"],
+      "primary_topic": "Array",
+      "language": "cpp",
+      "solution": "problems/0026-remove-duplicates-from-sorted-array/solution.cpp",
+      "acceptance": {
+        "status": "unverified_historical_import",
+        "source": "existing repository history",
+        "note": "No LeetCode submission receipt was available during migration."
+      },
+      "source": {
+        "kind": "legacy_repository",
+        "original_path": "array/26 Remove Duplicates from Sorted Array.cpp",
+        "commit": "8354919ddff2eed44fff99a6f2abf7c9d78654d5",
+        "bytes": 293,
+        "sha256": "06f52dfde43c774729132ef72a91ecdb92962fbe683ce79963ca357616cf4c05"
+      },
+      "analysis": {
+        "approach": "用 slow 指向当前去重结果的末尾，顺序扫描并把新值原地写回。",
+        "time_complexity": "O(n)",
+        "space_complexity": "O(1)",
+        "pitfalls": "实现从下标 1 开始，依赖题目给出的非空数组约束。",
+        "author": "Codex"
+      }
+    },
+    {
+      "id": 27,
+      "slug": "remove-element",
+      "title": "Remove Element",
+      "title_zh": "移除元素",
+      "difficulty": "Easy",
+      "topics": ["Array", "Two Pointers"],
+      "primary_topic": "Array",
+      "language": "cpp",
+      "solution": "problems/0027-remove-element/solution.cpp",
+      "acceptance": {
+        "status": "unverified_historical_import",
+        "source": "existing repository history",
+        "note": "No LeetCode submission receipt was available during migration."
+      },
+      "source": {
+        "kind": "legacy_repository",
+        "original_path": "array/27 Remove Element.cpp",
+        "commit": "8354919ddff2eed44fff99a6f2abf7c9d78654d5",
+        "bytes": 278,
+        "sha256": "485bf852a2c5f607a668a4ae3cddd96547d1fc221d5d94f000a6929394647eb7"
+      },
+      "analysis": {
+        "approach": "fast 扫描输入，遇到不等于 val 的元素就写到 slow 位置并推进 slow。",
+        "time_complexity": "O(n)",
+        "space_complexity": "O(1)",
+        "pitfalls": "返回长度之后的数组尾部内容没有语义，不应继续依赖。",
+        "author": "Codex"
+      }
+    },
+    {
+      "id": 35,
+      "slug": "search-insert-position",
+      "title": "Search Insert Position",
+      "title_zh": "搜索插入位置",
+      "difficulty": "Easy",
+      "topics": ["Array", "Binary Search"],
+      "primary_topic": "Binary Search",
+      "language": "cpp",
+      "solution": "problems/0035-search-insert-position/solution.cpp",
+      "acceptance": {
+        "status": "unverified_historical_import",
+        "source": "existing repository history",
+        "note": "No LeetCode submission receipt was available during migration."
+      },
+      "source": {
+        "kind": "legacy_repository",
+        "original_path": "array/35 Search Insert Position.cpp",
+        "commit": "8354919ddff2eed44fff99a6f2abf7c9d78654d5",
+        "bytes": 448,
+        "sha256": "ad95b8981b0f2a551811d16d4d53dc8bbc16bbf7ae38e5c100abbc15a7430678"
+      },
+      "analysis": {
+        "approach": "在闭区间 [left, right] 上二分；未命中时 left 正好落在插入位置。",
+        "time_complexity": "O(log n)",
+        "space_complexity": "O(1)",
+        "pitfalls": "闭区间模板要求循环条件为 left <= right，并在两侧都跳过 mid。",
+        "author": "Codex"
+      }
+    },
+    {
+      "id": 59,
+      "slug": "spiral-matrix-ii",
+      "title": "Spiral Matrix II",
+      "title_zh": "螺旋矩阵 II",
+      "difficulty": "Medium",
+      "topics": ["Array", "Matrix", "Simulation"],
+      "primary_topic": "Simulation",
+      "language": "cpp",
+      "solution": "problems/0059-spiral-matrix-ii/solution.cpp",
+      "acceptance": {
+        "status": "unverified_historical_import",
+        "source": "existing repository history",
+        "note": "No LeetCode submission receipt was available during migration."
+      },
+      "source": {
+        "kind": "legacy_repository",
+        "original_path": "array/59 Spiral Matrix II.cpp",
+        "commit": "8354919ddff2eed44fff99a6f2abf7c9d78654d5",
+        "bytes": 630,
+        "sha256": "455563f3b0ea54ebecb7236f0568d1b7b9ae82c6b5c42898f73fa5206a8ecf3b"
+      },
+      "analysis": {
+        "approach": "维护 left/right/top/bottom 四条边，按层顺时针填入递增数字。",
+        "time_complexity": "O(n^2)",
+        "space_complexity": "O(1) extra（输出矩阵为 O(n^2)）",
+        "pitfalls": "每完成一条边就要收缩对应边界；条件或收缩顺序错误时容易重复填充中心行、中心列，建议用 n=1、n=2、n=3 回归。",
+        "author": "Codex"
+      }
+    },
+    {
+      "id": 203,
+      "slug": "remove-linked-list-elements",
+      "title": "Remove Linked List Elements",
+      "title_zh": "移除链表元素",
+      "difficulty": "Easy",
+      "topics": ["Linked List", "Recursion"],
+      "primary_topic": "Linked List",
+      "language": "cpp",
+      "solution": "problems/0203-remove-linked-list-elements/solution.cpp",
+      "acceptance": {
+        "status": "unverified_historical_import",
+        "source": "existing repository history",
+        "note": "No LeetCode submission receipt was available during migration."
+      },
+      "source": {
+        "kind": "legacy_repository",
+        "original_path": "linkedlist/203 Remove the linked list element.cpp",
+        "commit": "8354919ddff2eed44fff99a6f2abf7c9d78654d5",
+        "bytes": 733,
+        "sha256": "1813ce0682b974d2cd70702da37dc75f6702a383eea0382d4750c4cba86c4821"
+      },
+      "analysis": {
+        "approach": "增加 dummy 头结点统一处理删除头结点和中间结点，遍历时直接绕过目标值结点。",
+        "time_complexity": "O(n)",
+        "space_complexity": "O(1)",
+        "pitfalls": "dummy 使用 new 创建但未释放；被移除结点也没有在函数内释放，需结合平台的所有权约定理解。",
+        "author": "Codex"
+      }
+    },
+    {
+      "id": 209,
+      "slug": "minimum-size-subarray-sum",
+      "title": "Minimum Size Subarray Sum",
+      "title_zh": "长度最小的子数组",
+      "difficulty": "Medium",
+      "topics": ["Array", "Binary Search", "Sliding Window", "Prefix Sum"],
+      "primary_topic": "Sliding Window",
+      "language": "cpp",
+      "solution": "problems/0209-minimum-size-subarray-sum/solution.cpp",
+      "acceptance": {
+        "status": "unverified_historical_import",
+        "source": "existing repository history",
+        "note": "No LeetCode submission receipt was available during migration."
+      },
+      "source": {
+        "kind": "legacy_repository",
+        "original_path": "array/209 Minimum Size Subarray Sum.cpp",
+        "commit": "8354919ddff2eed44fff99a6f2abf7c9d78654d5",
+        "bytes": 421,
+        "sha256": "01a7c240eccbafc4081e634889f394438658200e5a3a53a71be19de00dd4ff41"
+      },
+      "analysis": {
+        "approach": "right 扩张窗口累加；当窗口和达到 target 时持续移动 left，记录最短长度。",
+        "time_complexity": "O(n)",
+        "space_complexity": "O(1)",
+        "pitfalls": "窗口单调收缩依赖 nums 全为正数；若允许负数，这个策略不成立。",
+        "author": "Codex"
+      }
+    },
+    {
+      "id": 704,
+      "slug": "binary-search",
+      "title": "Binary Search",
+      "title_zh": "二分查找",
+      "difficulty": "Easy",
+      "topics": ["Array", "Binary Search"],
+      "primary_topic": "Binary Search",
+      "language": "cpp",
+      "solution": "problems/0704-binary-search/solution.cpp",
+      "acceptance": {
+        "status": "unverified_historical_import",
+        "source": "existing repository history",
+        "note": "No LeetCode submission receipt was available during migration."
+      },
+      "source": {
+        "kind": "legacy_repository",
+        "original_path": "array/704 binary search.cpp",
+        "commit": "4cb36bd86843690ad28da91199449566160bf5fe",
+        "bytes": 484,
+        "sha256": "7c04ad3f348cb9815b92ff1bca2a5d43c8a62926c859444fa6685d9411e93260"
+      },
+      "analysis": {
+        "approach": "在有序数组的闭区间上二分，命中返回下标，区间为空时返回 -1。",
+        "time_complexity": "O(log n)",
+        "space_complexity": "O(1)",
+        "pitfalls": "right 是有符号 int，而 nums.size() 是无符号类型；题目非空约束避免了空数组下的转换问题。",
+        "author": "Codex"
+      }
+    },
+    {
+      "id": 977,
+      "slug": "squares-of-a-sorted-array",
+      "title": "Squares of a Sorted Array",
+      "title_zh": "有序数组的平方",
+      "difficulty": "Easy",
+      "topics": ["Array", "Two Pointers", "Sorting"],
+      "primary_topic": "Two Pointers",
+      "language": "cpp",
+      "solution": "problems/0977-squares-of-a-sorted-array/solution.cpp",
+      "acceptance": {
+        "status": "unverified_historical_import",
+        "source": "existing repository history",
+        "note": "No LeetCode submission receipt was available during migration."
+      },
+      "source": {
+        "kind": "legacy_repository",
+        "original_path": "array/977 Squares of a Sorted Array.cpp",
+        "commit": "8354919ddff2eed44fff99a6f2abf7c9d78654d5",
+        "bytes": 529,
+        "sha256": "f21e7a4b86cc8797df419b13bf59d5c291dda62be0f8cc5254178911127392bd"
+      },
+      "analysis": {
+        "approach": "比较左右端平方值，把较大的一个从结果数组末尾向前填充。",
+        "time_complexity": "O(n)",
+        "space_complexity": "O(n)",
+        "pitfalls": "平方运算使用 int；当前题目约束下安全，迁移到更大数值范围时需注意溢出。",
+        "author": "Codex"
+      }
+    }
+  ]
+}

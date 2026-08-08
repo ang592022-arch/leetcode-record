@@ -1,0 +1,11 @@
+* text=auto
+*.py text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+.githooks/* text eol=lf
+*.cmd text eol=crlf
+
+# Accepted submissions are byte-preserved; never normalize their line endings.
+problems/**/solution.* -text
+problems/**/submissions/** -text
