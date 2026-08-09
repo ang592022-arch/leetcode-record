@@ -56,6 +56,9 @@ LANGUAGE_EXTENSIONS = {
 }
 EXTENSION_LANGUAGES = {value: key for key, value in LANGUAGE_EXTENSIONS.items()}
 CODE_EXTENSIONS = set(EXTENSION_LANGUAGES)
+REAL_REPOSITORY_MODE = "real_records"
+FIXTURE_SOURCE_KINDS = {"fixture", "test", "test_fixture", "synthetic", "simulation"}
+PROVENANCE_SOURCE_KINDS = {"legacy_repository", "leethub"}
 PROTECTED_TOP_LEVEL = {
     ".git",
     ".github",
@@ -172,9 +175,130 @@ def load_database(repo: Path) -> MutableMapping[str, Any]:
     return data
 
 
+def _language_policy(data: Mapping[str, Any]) -> Tuple[set[str], set[str]]:
+    raw = data.get("language_policy", {})
+    if raw in (None, ""):
+        raw = {}
+    if not isinstance(raw, Mapping):
+        raise AutomationError("language_policy 必须是 object")
+    allowed_raw = raw.get("allowed_languages", [])
+    sources_raw = raw.get("automatic_verified_sources", [])
+    if not isinstance(allowed_raw, list) or not isinstance(sources_raw, list):
+        raise AutomationError("language_policy 的 allowed_languages 和 automatic_verified_sources 必须是数组")
+    allowed = {str(item).strip().lower() for item in allowed_raw if str(item).strip()}
+    sources = {str(item).strip().lower() for item in sources_raw if str(item).strip()}
+    unknown = sorted(allowed - set(LANGUAGE_EXTENSIONS))
+    if unknown:
+        raise AutomationError("language_policy 包含不支持的语言：" + ", ".join(unknown))
+    return allowed, sources
+
+
+def _source_kind(value: Any) -> str:
+    return str(value or "").strip().lower()
+
+
+def _verified_source_kinds(problem: Mapping[str, Any]) -> set[str]:
+    kinds: set[str] = set()
+    source = problem.get("source", {})
+    if isinstance(source, Mapping):
+        kinds.add(_source_kind(source.get("kind")))
+    submissions = problem.get("submissions", [])
+    if isinstance(submissions, list):
+        for submission in submissions:
+            if not isinstance(submission, Mapping):
+                continue
+            acceptance = submission.get("acceptance", {})
+            source = submission.get("source", {})
+            if (
+                isinstance(acceptance, Mapping)
+                and acceptance.get("status") == "verified"
+                and isinstance(source, Mapping)
+            ):
+                kinds.add(_source_kind(source.get("kind")))
+    evidence_items = problem.get("accepted_evidence", [])
+    if isinstance(evidence_items, list):
+        for evidence in evidence_items:
+            if not isinstance(evidence, Mapping):
+                continue
+            acceptance = evidence.get("acceptance", {})
+            source = evidence.get("source", {})
+            if (
+                isinstance(acceptance, Mapping)
+                and acceptance.get("status") == "verified"
+                and isinstance(source, Mapping)
+            ):
+                kinds.add(_source_kind(source.get("kind")))
+    return {kind for kind in kinds if kind}
+
+
+def is_counted_verified(problem: Mapping[str, Any], data: Mapping[str, Any]) -> bool:
+    acceptance = problem.get("acceptance", {})
+    if not isinstance(acceptance, Mapping) or acceptance.get("status") != "verified":
+        return False
+    kinds = _verified_source_kinds(problem)
+    if not kinds or kinds & FIXTURE_SOURCE_KINDS:
+        return False
+    _, automatic_sources = _language_policy(data)
+    if data.get("repository_mode") == REAL_REPOSITORY_MODE:
+        return bool(kinds & automatic_sources)
+    return True
+
+
+def _git_blob_bytes(repo: Path, commit: Any, original_path: Any, label: str) -> bytes:
+    commit_text = str(commit or "").strip().lower()
+    original_text = str(original_path or "").strip()
+    if not re.fullmatch(r"[0-9a-f]{40}", commit_text) or not original_text:
+        raise AutomationError(f"{label} 缺少可验证的 Git commit/original_path")
+    completed = subprocess.run(
+        ["git", "show", f"{commit_text}:{original_text}"],
+        cwd=str(repo),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+    if completed.returncode != 0:
+        detail = completed.stderr.decode("utf-8", errors="replace").strip()
+        raise AutomationError(f"{label} 无法从 Git 历史读取原始代码：{detail}")
+    return completed.stdout
+
+
+def _validate_stored_code(
+    repo: Path,
+    relative: str,
+    language: str,
+    source: Mapping[str, Any],
+    label: str,
+) -> None:
+    expected_extension = LANGUAGE_EXTENSIONS[language]
+    actual_extension = Path(relative).suffix.lower().lstrip(".")
+    if actual_extension != expected_extension:
+        raise AutomationError(
+            f"{label} 语言/扩展名不一致：metadata={language}，路径={relative}；禁止自动转换语言"
+        )
+    path = safe_repo_path(repo, relative)
+    if not path.is_file():
+        raise AutomationError(f"{label} 文件不存在：{relative}")
+    content = path.read_bytes()
+    expected_sha = str(source.get("sha256", "")).lower()
+    if not re.fullmatch(r"[0-9a-f]{64}", expected_sha):
+        raise AutomationError(f"{label} source.sha256 无效")
+    actual_sha = hashlib.sha256(content).hexdigest()
+    if actual_sha != expected_sha:
+        raise AutomationError(f"{label} 原始代码哈希不匹配：{relative}；拒绝继续自动化")
+    if "bytes" in source and source.get("bytes") != len(content):
+        raise AutomationError(f"{label} source.bytes 与真实文件大小不一致：{relative}")
+    if _source_kind(source.get("kind")) in PROVENANCE_SOURCE_KINDS:
+        historical = _git_blob_bytes(repo, source.get("commit"), source.get("original_path"), label)
+        if historical != content:
+            raise AutomationError(f"{label} 与来源 Git blob 不是字节级一致：{relative}")
+
+
 def validate_database(data: Mapping[str, Any], require_files: bool = False, repo: Optional[Path] = None) -> None:
     if data.get("schema_version") != SCHEMA_VERSION or not isinstance(data.get("problems"), list):
         raise AutomationError("metadata/problems.json 必须包含 schema_version=1 和 problems 数组")
+    real_mode = data.get("repository_mode") == REAL_REPOSITORY_MODE
+    allowed_languages, automatic_sources = _language_policy(data)
+    if real_mode and (not allowed_languages or not automatic_sources):
+        raise AutomationError("real_records 仓库必须声明允许语言和自动 Accepted 来源")
     seen_ids: Dict[int, int] = {}
     seen_solutions: Dict[str, int] = {}
     for index, problem in enumerate(data["problems"]):
@@ -203,6 +327,16 @@ def validate_database(data: Mapping[str, Any], require_files: bool = False, repo
             raise AutomationError(f"LC{problem['id']} source 缺少：{', '.join(source_missing)}")
         if analysis_missing:
             raise AutomationError(f"LC{problem['id']} analysis 缺少：{', '.join(analysis_missing)}")
+        language = str(problem["language"]).strip().lower()
+        if language not in LANGUAGE_EXTENSIONS:
+            raise AutomationError(f"LC{problem['id']} language 无效：{problem['language']}")
+        if allowed_languages and language not in allowed_languages:
+            raise AutomationError(f"LC{problem['id']} 使用了仓库策略不允许的语言：{language}")
+        source_kind = _source_kind(problem["source"].get("kind"))
+        if real_mode and source_kind in FIXTURE_SOURCE_KINDS:
+            raise AutomationError(f"LC{problem['id']} 是测试/模拟 fixture，禁止进入真实记录")
+        if real_mode and problem["acceptance"].get("status") == "verified" and not is_counted_verified(problem, data):
+            raise AutomationError(f"LC{problem['id']} 标记 verified，但没有允许的真实 Accepted 来源")
         if problem["id"] in seen_ids:
             raise AutomationError(f"题号重复：LC{problem['id']}")
         seen_ids[problem["id"]] = index
@@ -210,20 +344,84 @@ def validate_database(data: Mapping[str, Any], require_files: bool = False, repo
         if solution in seen_solutions:
             raise AutomationError(f"solution 路径重复：{solution}")
         seen_solutions[solution] = index
+        expected_extension = LANGUAGE_EXTENSIONS[language]
+        if Path(solution).suffix.lower().lstrip(".") != expected_extension:
+            raise AutomationError(
+                f"LC{problem['id']} 语言/solution 扩展名不一致：{language} vs {solution}；禁止语言转换"
+            )
+        submissions = problem.get("submissions", [])
+        if not isinstance(submissions, list):
+            raise AutomationError(f"LC{problem['id']} submissions 必须是数组")
+        for submission_index, submission in enumerate(submissions):
+            if not isinstance(submission, dict):
+                raise AutomationError(f"LC{problem['id']} submissions[{submission_index}] 必须是 object")
+            submission_language = str(submission.get("language", "")).strip().lower()
+            submission_path = str(submission.get("path", ""))
+            submission_source = submission.get("source", {})
+            submission_acceptance = submission.get("acceptance", {})
+            if submission_language not in LANGUAGE_EXTENSIONS or not isinstance(submission_source, dict):
+                raise AutomationError(f"LC{problem['id']} submission 语言或来源无效：{submission_path}")
+            if Path(submission_path).suffix.lower().lstrip(".") != LANGUAGE_EXTENSIONS[submission_language]:
+                raise AutomationError(f"LC{problem['id']} submission 语言/扩展名不一致：{submission_path}")
+            if allowed_languages and submission_language not in allowed_languages:
+                raise AutomationError(f"LC{problem['id']} submission 使用了不允许的语言：{submission_language}")
+            if real_mode and submission_language != language:
+                raise AutomationError(f"LC{problem['id']} submission 与 canonical 语言不同；禁止跨语言替换或混入")
+            submission_kind = _source_kind(submission_source.get("kind"))
+            if real_mode and submission_kind in FIXTURE_SOURCE_KINDS:
+                raise AutomationError(f"LC{problem['id']} submission 是测试/模拟 fixture，禁止进入真实记录")
+            if (
+                real_mode
+                and isinstance(submission_acceptance, Mapping)
+                and submission_acceptance.get("status") == "verified"
+                and submission_kind not in automatic_sources
+            ):
+                raise AutomationError(f"LC{problem['id']} submission 没有允许的 Accepted 来源：{submission_kind}")
+            if require_files:
+                if repo is None:
+                    raise AutomationError("内部错误：require_files 需要 repo")
+                _validate_stored_code(repo, submission_path, submission_language, submission_source, f"LC{problem['id']} submission")
+        accepted_evidence = problem.get("accepted_evidence", [])
+        if not isinstance(accepted_evidence, list):
+            raise AutomationError(f"LC{problem['id']} accepted_evidence 必须是数组")
+        for evidence_index, evidence in enumerate(accepted_evidence):
+            if not isinstance(evidence, dict):
+                raise AutomationError(f"LC{problem['id']} accepted_evidence[{evidence_index}] 必须是 object")
+            evidence_language = str(evidence.get("language", "")).strip().lower()
+            evidence_source = evidence.get("source", {})
+            evidence_acceptance = evidence.get("acceptance", {})
+            evidence_sha = str(evidence.get("sha256", "")).lower()
+            if evidence_language not in LANGUAGE_EXTENSIONS or not isinstance(evidence_source, dict):
+                raise AutomationError(f"LC{problem['id']} Accepted evidence 语言或来源无效")
+            if allowed_languages and evidence_language not in allowed_languages:
+                raise AutomationError(f"LC{problem['id']} Accepted evidence 使用了不允许的语言：{evidence_language}")
+            if real_mode and evidence_language != language:
+                raise AutomationError(f"LC{problem['id']} Accepted evidence 与 canonical 语言不同")
+            evidence_kind = _source_kind(evidence_source.get("kind"))
+            if real_mode and evidence_kind not in automatic_sources:
+                raise AutomationError(f"LC{problem['id']} Accepted evidence 来源不允许：{evidence_kind}")
+            if not isinstance(evidence_acceptance, Mapping) or evidence_acceptance.get("status") != "verified":
+                raise AutomationError(f"LC{problem['id']} Accepted evidence 必须标记 verified")
+            if not re.fullmatch(r"[0-9a-f]{64}", evidence_sha):
+                raise AutomationError(f"LC{problem['id']} Accepted evidence sha256 无效")
+            original_extension = Path(str(evidence_source.get("original_path", ""))).suffix.lower().lstrip(".")
+            if original_extension and original_extension != LANGUAGE_EXTENSIONS[evidence_language]:
+                raise AutomationError(f"LC{problem['id']} Accepted evidence 来源扩展名与语言冲突")
+            if require_files and evidence_kind in PROVENANCE_SOURCE_KINDS:
+                if repo is None:
+                    raise AutomationError("内部错误：require_files 需要 repo")
+                original_bytes = _git_blob_bytes(
+                    repo,
+                    evidence_source.get("commit"),
+                    evidence_source.get("original_path"),
+                    f"LC{problem['id']} Accepted evidence",
+                )
+                if hashlib.sha256(original_bytes).hexdigest() != evidence_sha:
+                    raise AutomationError(f"LC{problem['id']} Accepted evidence 与来源 Git blob 不一致")
         if require_files:
             if repo is None:
                 raise AutomationError("内部错误：require_files 需要 repo")
-            solution_path = safe_repo_path(repo, solution)
-            if not solution_path.is_file():
-                raise AutomationError(f"LC{problem['id']} 的 solution 不存在：{solution}")
-            expected_sha = str(problem["source"].get("sha256", "")).lower()
-            if not re.fullmatch(r"[0-9a-f]{64}", expected_sha):
-                raise AutomationError(f"LC{problem['id']} 的 source.sha256 无效")
-            actual_sha = hashlib.sha256(solution_path.read_bytes()).hexdigest()
-            if actual_sha != expected_sha:
-                raise AutomationError(
-                    f"LC{problem['id']} 的原始解答哈希不匹配：{solution}；拒绝继续自动化"
-                )
+            _validate_stored_code(repo, solution, language, problem["source"], f"LC{problem['id']} canonical")
 
 
 def save_database(repo: Path, data: MutableMapping[str, Any], dry_run: bool = False) -> bool:
@@ -267,6 +465,20 @@ def normalize_language(value: Any, suffix: str = "") -> str:
     if ext in EXTENSION_LANGUAGES:
         return EXTENSION_LANGUAGES[ext]
     raise AutomationError(f"不支持的语言：{value or suffix}")
+
+
+def submission_language(value: Any, suffix: str = "") -> str:
+    explicit = normalize_language(value) if str(value or "").strip() else None
+    inferred = normalize_language("", suffix) if str(suffix or "").strip() else None
+    if explicit and inferred and explicit != inferred:
+        raise AutomationError(
+            f"submission 语言与文件扩展名冲突：metadata={explicit}，extension={suffix}；禁止转换语言"
+        )
+    if explicit is not None:
+        return explicit
+    if inferred is not None:
+        return inferred
+    raise AutomationError("submission 缺少可验证的语言和文件扩展名")
 
 
 def normalize_difficulty(value: Any) -> str:
@@ -394,7 +606,7 @@ def _has_leethub_git_provenance(repo: Path, code_path: Path) -> bool:
         return False
     relative = code_path.resolve().relative_to(repo.resolve()).as_posix()
     completed = subprocess.run(
-        ["git", "log", "-1", "--format=%B", "--", relative],
+        ["git", "log", "-1", "--format=%an%x00%ae%x00%B", "--", relative],
         cwd=str(repo),
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
@@ -402,7 +614,12 @@ def _has_leethub_git_provenance(repo: Path, code_path: Path) -> bool:
         encoding="utf-8",
         errors="replace",
     )
-    return completed.returncode == 0 and bool(re.search(r"\bLeetHub\b", completed.stdout, re.IGNORECASE))
+    if completed.returncode != 0:
+        return False
+    author_name, _, remainder = completed.stdout.partition("\x00")
+    author_email, _, message = remainder.partition("\x00")
+    is_bot = "[bot]" in author_name.lower() or "[bot]" in author_email.lower()
+    return not is_bot and bool(re.search(r"\bLeetHub\b", message, re.IGNORECASE))
 
 
 def submission_from_directory(directory: Path, repo: Path, selected_code: Optional[Path] = None) -> Submission:
@@ -416,10 +633,10 @@ def submission_from_directory(directory: Path, repo: Path, selected_code: Option
         raise AutomationError(f"目录中没有支持的解答文件：{directory}")
     if code_path is not None:
         code = code_path.read_bytes()
-        language = normalize_language(_first(metadata, ("language", "lang", "submission.language"), ""), code_path.suffix)
+        language = submission_language(_first(metadata, ("language", "lang", "submission.language"), ""), code_path.suffix)
     else:
         code = str(code_value).encode("utf-8")
-        language = normalize_language(_first(metadata, ("language", "lang", "submission.language"), ""))
+        language = submission_language(_first(metadata, ("language", "lang", "submission.language"), ""))
     problem_id = _problem_id(metadata, int(match.group("id")))
     fallback_slug = slugify(match.group("name"))
     title = str(_first(metadata, ("title", "question.title"), match.group("name").replace("-", " ").strip()))
@@ -495,7 +712,7 @@ def submissions_from_bundle(bundle: Path, repo: Path) -> List[Submission]:
                 raise AutomationError(f"JSON bundle 第 {index + 1} 项缺少 code 或有效代码文件")
         else:
             code = code_value.encode("utf-8")
-        language = normalize_language(
+        language = submission_language(
             _first(entry, ("language", "lang", "submission.language"), ""),
             code_path.suffix if code_path else Path(str(_first(entry, ("filename", "file"), ""))).suffix,
         )
@@ -633,7 +850,24 @@ def import_submission(
         raise AutomationError(
             f"LC{submission.problem_id} 没有明确的 Accepted 证明；拒绝写入 canonical solution"
         )
+    allowed_languages, automatic_sources = _language_policy(data)
+    if allowed_languages and submission.language not in allowed_languages:
+        raise AutomationError(
+            f"LC{submission.problem_id} 的 {submission.language} submission 不符合仓库允许语言；拒绝导入"
+        )
+    if (
+        data.get("repository_mode") == REAL_REPOSITORY_MODE
+        and submission.source_kind not in automatic_sources
+    ):
+        raise AutomationError(
+            f"LC{submission.problem_id} 的来源 {submission.source_kind} 不允许自动标记为真实 Accepted"
+        )
     record = _find_problem(data, submission)
+    if record is not None and str(record.get("language", "")).lower() != submission.language:
+        raise AutomationError(
+            f"LC{submission.problem_id} 已记录为 {record.get('language')}，收到 {submission.language}；"
+            "禁止跨语言替换或混入，请保留原始输入并人工核对来源"
+        )
     extension = LANGUAGE_EXTENSIONS[submission.language]
     desired_solution = f"problems/{submission.problem_id:04d}-{submission.slug}/solution.{extension}"
     new_record = record is None
@@ -648,6 +882,7 @@ def import_submission(
     solution_relative = str(record["solution"])
     solution_path = safe_repo_path(repo, solution_relative)
     changed: List[str] = []
+    canonical_matches = False
     if not solution_path.exists():
         if not new_record:
             expected_sha = str(record.get("source", {}).get("sha256", "")).lower()
@@ -663,6 +898,7 @@ def import_submission(
     else:
         existing = solution_path.read_bytes()
         if existing == submission.code:
+            canonical_matches = True
             action = "new" if new_record else "unchanged"
         else:
             if conflict == "reject":
@@ -698,6 +934,34 @@ def import_submission(
                 )
                 if action == "unchanged":
                     action = "metadata"
+
+    if submission.accepted and not new_record and canonical_matches:
+        evidence_field = record.get("accepted_evidence", [])
+        submissions_field = record.get("submissions", [])
+        if not isinstance(evidence_field, list) or not isinstance(submissions_field, list):
+            raise AutomationError(f"LC{submission.problem_id} 的 Accepted 证据字段不是数组")
+        existing_evidence = evidence_field + submissions_field
+        already_recorded = any(
+            isinstance(item, Mapping)
+            and item.get("sha256") == submission.sha256
+            and isinstance(item.get("source"), Mapping)
+            and _source_kind(item["source"].get("kind")) == submission.source_kind
+            for item in existing_evidence
+        )
+        if not already_recorded:
+            evidence = record.setdefault("accepted_evidence", [])
+            if not isinstance(evidence, list):
+                raise AutomationError(f"LC{submission.problem_id} 的 accepted_evidence 字段不是数组")
+            evidence.append(
+                {
+                    "language": submission.language,
+                    "acceptance": {"status": "verified", "source": submission.acceptance_source},
+                    "source": _source_object(submission, repo),
+                    "sha256": submission.sha256,
+                }
+            )
+            if action == "unchanged":
+                action = "metadata"
 
     if submission.accepted:
         acceptance = record.setdefault("acceptance", {})
@@ -913,6 +1177,7 @@ def render_problem_readme(problem: Mapping[str, Any]) -> str:
         f"# LC{problem['id']} {_markdown(problem['title_zh'])} / {_markdown(problem['title'])}\n\n"
         "<!-- 此文件由 scripts/leetcode_repo.py 根据 metadata/problems.json 生成。 -->\n\n"
         f"- 难度：{_markdown(problem['difficulty'])}\n"
+        f"- 语言：{_markdown(problem['language'])}\n"
         f"- Topics：{topics}\n"
         f"- 主分类：{_markdown(problem['primary_topic'])}\n"
         f"- 验证状态：{verified_text}\n\n"
@@ -927,11 +1192,17 @@ def render_problem_readme(problem: Mapping[str, Any]) -> str:
     )
 
 
-def render_root_readme(problems: Sequence[Mapping[str, Any]]) -> str:
+def render_root_readme(data: Mapping[str, Any]) -> str:
+    problems = data["problems"]
     ordered = sorted(problems, key=lambda item: (slugify(item["primary_topic"]), int(item["id"])))
-    verified = sum(1 for item in ordered if item["acceptance"].get("status") == "verified")
-    unverified = len(ordered) - verified
-    counts = {level: sum(1 for item in ordered if item["difficulty"] == level) for level in ("Easy", "Medium", "Hard")}
+    verified_items = [item for item in ordered if is_counted_verified(item, data)]
+    not_counted = len(ordered) - len(verified_items)
+    counts = {
+        level: sum(1 for item in verified_items if item["difficulty"] == level)
+        for level in ("Easy", "Medium", "Hard")
+    }
+    allowed_languages, _ = _language_policy(data)
+    language_text = ", ".join(sorted(allowed_languages)) if allowed_languages else "按真实 submission 保留"
     lines = [
         "# LeetCode",
         "",
@@ -939,9 +1210,13 @@ def render_root_readme(problems: Sequence[Mapping[str, Any]]) -> str:
         "",
         "保存本人原始 LeetCode 解答与简洁学习记录。`solution.*` 永不被自动化覆盖；AI 建议只会独立存放。",
         "",
-        f"Solved: **{len(ordered)}**（Verified: **{verified}**，Unverified: **{unverified}**）",
+        f"Verified Accepted / Solved: **{len(verified_items)}**",
         "",
-        f"Easy: **{counts['Easy']}** · Medium: **{counts['Medium']}** · Hard: **{counts['Hard']}**",
+        f"Historical or unverified records（不计入 Solved）: **{not_counted}**",
+        "",
+        f"Verified difficulty — Easy: **{counts['Easy']}** · Medium: **{counts['Medium']}** · Hard: **{counts['Hard']}**",
+        "",
+        f"Accepted language policy: **{language_text}**",
         "",
         "## 自动同步",
         "",
@@ -956,17 +1231,17 @@ def render_root_readme(problems: Sequence[Mapping[str, Any]]) -> str:
             [
                 f"## {_topic_display(topic)}",
                 "",
-                "| ID | Problem | Difficulty | Status | Solution |",
-                "| --: | --- | --- | --- | --- |",
+                "| ID | Problem | Language | Difficulty | Status | Solution |",
+                "| --: | --- | --- | --- | --- | --- |",
             ]
         )
         for problem in grouped[topic]:
             solution = str(problem["solution"])
             problem_readme = (Path(solution).parent / "README.md").as_posix()
             title = f"{_markdown(problem['title_zh'])} / {_markdown(problem['title'])}"
-            status = "verified" if problem["acceptance"].get("status") == "verified" else "unverified"
+            status = "verified" if is_counted_verified(problem, data) else "historical/unverified"
             lines.append(
-                f"| {int(problem['id'])} | [{title}]({problem_readme}) | {_markdown(problem['difficulty'])} | {status} | [code]({solution}) |"
+                f"| {int(problem['id'])} | [{title}]({problem_readme}) | {_markdown(problem['language'])} | {_markdown(problem['difficulty'])} | {status} | [code]({solution}) |"
             )
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
@@ -975,7 +1250,7 @@ def render_root_readme(problems: Sequence[Mapping[str, Any]]) -> str:
 def generate_readmes(repo: Path, check: bool = False, dry_run: bool = False) -> List[str]:
     data = load_database(repo)
     validate_database(data, require_files=True, repo=repo)
-    planned: Dict[Path, str] = {repo / "README.md": render_root_readme(data["problems"])}
+    planned: Dict[Path, str] = {repo / "README.md": render_root_readme(data)}
     for problem in data["problems"]:
         solution_path = safe_repo_path(repo, str(problem["solution"]))
         planned[solution_path.parent / "README.md"] = render_problem_readme(problem)
@@ -1162,7 +1437,25 @@ def guard_canonical_solutions(repo: Path) -> List[str]:
         if after.returncode != 0:
             issues.append(f"LC{problem.get('id')}: 禁止删除或移动原始解答 {relative}")
         elif after.stdout != before.stdout:
-            issues.append(f"LC{problem.get('id')}: 禁止覆盖原始解答 {relative}；请新增 optimized.* 或 submissions/*")
+            source = problem.get("source", {})
+            provenance = None
+            if isinstance(source, Mapping) and _source_kind(source.get("kind")) in PROVENANCE_SOURCE_KINDS:
+                commit = str(source.get("commit") or "").strip().lower()
+                original = str(source.get("original_path") or "").strip()
+                if re.fullmatch(r"[0-9a-f]{40}", commit) and original:
+                    restored = subprocess.run(
+                        ["git", "show", f"{commit}:{original}"],
+                        cwd=str(repo),
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.DEVNULL,
+                    )
+                    if restored.returncode == 0:
+                        provenance = restored.stdout
+            if provenance is None or after.stdout != provenance:
+                issues.append(
+                    f"LC{problem.get('id')}: 禁止覆盖或转换原始解答 {relative}；"
+                    "唯一例外是恢复为 metadata 所指向 Git blob 的精确字节"
+                )
     return issues
 
 

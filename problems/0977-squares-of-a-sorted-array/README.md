@@ -3,6 +3,7 @@
 <!-- 此文件由 scripts/leetcode_repo.py 根据 metadata/problems.json 生成。 -->
 
 - 难度：Easy
+- 语言：cpp
 - Topics：Array、Two Pointers、Sorting
 - 主分类：Two Pointers
 - 验证状态：历史导入，Accepted 状态待验证

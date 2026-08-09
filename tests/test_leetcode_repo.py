@@ -122,13 +122,178 @@ class TemporaryRepositoryTest(unittest.TestCase):
         self.assertIn("README.md", changed)
         root = (self.repo / "README.md").read_text(encoding="utf-8")
         problem_readme = (solution_path.parent / "README.md").read_text(encoding="utf-8")
-        self.assertIn("Solved: **1**", root)
-        self.assertIn("Verified: **0**", root)
-        self.assertIn("Unverified: **1**", root)
+        self.assertIn("Verified Accepted / Solved: **0**", root)
+        self.assertIn("Historical or unverified records（不计入 Solved）: **1**", root)
         self.assertIn("## 自动同步", root)
         self.assertIn("## 我的代码", problem_readme)
         self.assertIn("## Codex 分析", problem_readme)
+        self.assertIn("- 语言：cpp", problem_readme)
         self.assertEqual([], AUTOMATION.generate_readmes(self.repo, check=True))
+
+    def test_verified_fixture_is_never_counted_as_solved(self) -> None:
+        code = b"class Solution {};\n"
+        solution = "problems/0001-two-sum/solution.cpp"
+        path = self.repo / solution
+        path.parent.mkdir(parents=True)
+        path.write_bytes(code)
+        fixture = record(1, solution, code)
+        fixture["acceptance"] = {"status": "verified", "source": "test fixture"}
+        self.write_database({"schema_version": 1, "problems": [fixture]})
+
+        AUTOMATION.generate_readmes(self.repo)
+
+        root = (self.repo / "README.md").read_text(encoding="utf-8")
+        self.assertIn("Verified Accepted / Solved: **0**", root)
+        self.assertIn("historical/unverified", root)
+
+    def test_language_metadata_must_match_code_extension(self) -> None:
+        directory = self.repo / "42-answer"
+        directory.mkdir()
+        (directory / "42-answer.cpp").write_bytes(b"class Solution {};\n")
+        (directory / "metadata.json").write_text(
+            json.dumps({"id": 42, "language": "Python", "status": "Accepted"}),
+            encoding="utf-8",
+        )
+
+        with self.assertRaises(AUTOMATION.AutomationError):
+            AUTOMATION.submission_from_directory(directory, self.repo)
+
+    def test_real_cpp_policy_rejects_cross_language_submission_before_writing(self) -> None:
+        original = b"class Solution { int original; };\n"
+        solution = "problems/0001-two-sum/solution.cpp"
+        path = self.repo / solution
+        path.parent.mkdir(parents=True)
+        path.write_bytes(original)
+        data = {
+            "schema_version": 1,
+            "repository_mode": "real_records",
+            "language_policy": {
+                "allowed_languages": ["cpp"],
+                "automatic_verified_sources": ["leethub"],
+            },
+            "problems": [record(1, solution, original)],
+        }
+        incoming = AUTOMATION.Submission(
+            problem_id=1,
+            slug="two-sum",
+            title="Two Sum",
+            title_zh="两数之和",
+            difficulty="Easy",
+            topics=["Array"],
+            primary_topic="array",
+            language="python",
+            code=b"class Solution:\n    pass\n",
+            accepted=True,
+            acceptance_source="git:LeetHub commit",
+            source_kind="leethub",
+            original_path="0001-two-sum/0001-two-sum.py",
+        )
+
+        with self.assertRaises(AUTOMATION.AutomationError):
+            AUTOMATION.import_submission(self.repo, data, incoming)
+
+        self.assertEqual(original, path.read_bytes())
+        self.assertFalse((path.parent / "submissions").exists())
+
+    def test_identical_real_leethub_code_records_evidence_without_duplicate_file(self) -> None:
+        original = b"class Solution { public: int answer = 42; };\n"
+        legacy = self.repo / "legacy" / "two-sum.cpp"
+        legacy.parent.mkdir()
+        legacy.write_bytes(original)
+        git(self.repo, "add", "legacy/two-sum.cpp")
+        git(self.repo, "commit", "-m", "solve: preserve historical fixture")
+        legacy_commit = git(self.repo, "rev-parse", "HEAD").stdout.strip()
+
+        solution = "problems/0001-two-sum/solution.cpp"
+        solution_path = self.repo / solution
+        solution_path.parent.mkdir(parents=True)
+        solution_path.write_bytes(original)
+        item = record(1, solution, original)
+        item["acceptance"] = {"status": "unverified_historical_import", "source": "history"}
+        item["source"] = {
+            "kind": "legacy_repository",
+            "original_path": "legacy/two-sum.cpp",
+            "commit": legacy_commit,
+            "bytes": len(original),
+            "sha256": hashlib.sha256(original).hexdigest(),
+        }
+        data = {
+            "schema_version": 1,
+            "repository_mode": "real_records",
+            "language_policy": {
+                "allowed_languages": ["cpp"],
+                "automatic_verified_sources": ["leethub"],
+            },
+            "problems": [item],
+        }
+        self.write_database(data)
+        git(self.repo, "add", "metadata/problems.json", solution)
+        git(self.repo, "commit", "-m", "chore: migrate historical fixture")
+
+        incoming_path = self.repo / "0001-two-sum" / "0001-two-sum.cpp"
+        incoming_path.parent.mkdir()
+        incoming_path.write_bytes(original)
+        git(self.repo, "add", "0001-two-sum/0001-two-sum.cpp")
+        git(self.repo, "commit", "-m", "Time: fixture - LeetHub")
+        incoming = AUTOMATION.Submission(
+            problem_id=1,
+            slug="two-sum",
+            title="Two Sum",
+            title_zh="两数之和",
+            difficulty="Easy",
+            topics=["Array"],
+            primary_topic="array",
+            language="cpp",
+            code=original,
+            accepted=True,
+            acceptance_source="git:LeetHub commit",
+            source_kind="leethub",
+            original_path="0001-two-sum/0001-two-sum.cpp",
+        )
+
+        result = AUTOMATION.import_submission(self.repo, data, incoming)
+
+        self.assertEqual("metadata", result.action)
+        self.assertEqual(original, solution_path.read_bytes())
+        self.assertFalse((solution_path.parent / "submissions").exists())
+        stored = AUTOMATION.load_database(self.repo)
+        self.assertEqual(1, len(stored["problems"][0]["accepted_evidence"]))
+        self.assertTrue(AUTOMATION.is_counted_verified(stored["problems"][0], stored))
+        AUTOMATION.validate_database(stored, require_files=True, repo=self.repo)
+
+    def test_legacy_provenance_guard_detects_line_ending_rewrite(self) -> None:
+        legacy = self.repo / "legacy" / "answer.cpp"
+        legacy.parent.mkdir()
+        original = b"class Solution {\n};\n"
+        legacy.write_bytes(original)
+        git(self.repo, "add", "legacy/answer.cpp")
+        git(self.repo, "commit", "-m", "solve: preserve fixture source")
+        source_commit = git(self.repo, "rev-parse", "HEAD").stdout.strip()
+
+        rewritten = original.replace(b"\n", b"\r\n")
+        solution = "problems/0042-answer/solution.cpp"
+        path = self.repo / solution
+        path.parent.mkdir(parents=True)
+        path.write_bytes(rewritten)
+        item = record(42, solution, rewritten)
+        item["source"] = {
+            "kind": "legacy_repository",
+            "original_path": "legacy/answer.cpp",
+            "commit": source_commit,
+            "bytes": len(rewritten),
+            "sha256": hashlib.sha256(rewritten).hexdigest(),
+        }
+        data = {"schema_version": 1, "problems": [item]}
+
+        with self.assertRaises(AUTOMATION.AutomationError):
+            AUTOMATION.validate_database(data, require_files=True, repo=self.repo)
+
+        self.write_database(data)
+        git(self.repo, "add", "metadata/problems.json", solution)
+        git(self.repo, "commit", "-m", "chore: preserve migration defect fixture")
+        path.write_bytes(original)
+        git(self.repo, "add", solution)
+        self.assertEqual([], AUTOMATION.guard_canonical_solutions(self.repo))
 
     def test_json_bundle_import_is_exact_and_verified(self) -> None:
         self.write_database(empty_database({"future_schema_note": {"keep": True}}))
@@ -353,6 +518,9 @@ class EndToEndBareRemoteTest(unittest.TestCase):
                 ),
                 encoding="utf-8",
             )
+            git(repo, "add", "15-3sum")
+            git(repo, "commit", "-m", "Time: fixture - LeetHub")
+            git(repo, "push")
 
             sync = run(
                 [sys.executable, "scripts/leetcode_repo.py", "sync", "--source", ".", "--consume"], repo
@@ -384,6 +552,39 @@ class EndToEndBareRemoteTest(unittest.TestCase):
             rejected = git(repo, "push", "--force", "origin", "main", check=False)
             self.assertNotEqual(0, rejected.returncode)
             self.assertIn("non-fast-forward", rejected.stderr)
+
+
+class RealRepositoryPolicyTest(unittest.TestCase):
+    def test_real_repository_has_only_cpp_records_and_real_statistics(self) -> None:
+        data = AUTOMATION.load_database(REAL_REPO)
+
+        AUTOMATION.validate_database(data, require_files=True, repo=REAL_REPO)
+
+        self.assertEqual("real_records", data["repository_mode"])
+        self.assertEqual(["cpp"], data["language_policy"]["allowed_languages"])
+        self.assertFalse(list((REAL_REPO / "problems").rglob("*.py")))
+        self.assertTrue(all(item["language"] == "cpp" for item in data["problems"]))
+        self.assertFalse(
+            any(
+                item["source"]["kind"] in AUTOMATION.FIXTURE_SOURCE_KINDS
+                for item in data["problems"]
+            )
+        )
+        rendered = AUTOMATION.render_root_readme(data)
+        self.assertIn("Verified Accepted / Solved: **1**", rendered)
+        self.assertIn("Historical or unverified records（不计入 Solved）: **7**", rendered)
+        self.assertIn("Accepted language policy: **cpp**", rendered)
+
+    def test_automation_and_test_python_are_excluded_from_language_statistics(self) -> None:
+        paths = [
+            "scripts/leetcode_repo.py",
+            "scripts/obsidian_sync.py",
+            "tests/test_leetcode_repo.py",
+            "tests/test_obsidian_sync.py",
+        ]
+        attributes = git(REAL_REPO, "check-attr", "linguist-vendored", "--", *paths).stdout
+        for path in paths:
+            self.assertIn(f"{path}: linguist-vendored: set", attributes)
 
 
 if __name__ == "__main__":

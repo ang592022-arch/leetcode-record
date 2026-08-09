@@ -15,6 +15,7 @@ run_python() {
     fi
 }
 
+run_python scripts/leetcode_repo.py validate
 run_python scripts/leetcode_repo.py guard-solutions
 run_python scripts/leetcode_repo.py scan --staged
 

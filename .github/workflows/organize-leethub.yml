@@ -39,6 +39,9 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git branch --set-upstream-to="origin/${GITHUB_REF_NAME}" "${GITHUB_REF_NAME}"
 
+      - name: Validate existing provenance and language policy
+        run: python scripts/leetcode_repo.py validate
+
       - name: Organize, validate, commit, and push safely
         run: >-
           python scripts/leetcode_repo.py sync

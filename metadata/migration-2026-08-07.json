@@ -4,46 +4,51 @@
   "source_head": "8354919ddff2eed44fff99a6f2abf7c9d78654d5",
   "method": "byte-preserving git mv",
   "recovery": "Every original path remains available from source_head and the untouched source clone.",
+  "integrity_audit": {
+    "date": "2026-08-09",
+    "finding": "The migration checkout had added CRLF line endings even though the source Git blobs used LF.",
+    "repair": "Restore every canonical solution byte-for-byte from its recorded source commit and original path."
+  },
   "moved": [
     {
       "from": "array/26 Remove Duplicates from Sorted Array.cpp",
       "to": "problems/0026-remove-duplicates-from-sorted-array/solution.cpp",
-      "sha256": "06f52dfde43c774729132ef72a91ecdb92962fbe683ce79963ca357616cf4c05"
+      "sha256": "276974c0049c2e7c17bc4a11e947bdbbc147a3884614526184c0e0025b8530e4"
     },
     {
       "from": "array/27 Remove Element.cpp",
       "to": "problems/0027-remove-element/solution.cpp",
-      "sha256": "485bf852a2c5f607a668a4ae3cddd96547d1fc221d5d94f000a6929394647eb7"
+      "sha256": "806d0ea84e6a99b78ce145d841757f9ca8750ffa9a4adc93a9ad04fcce7886e1"
     },
     {
       "from": "array/35 Search Insert Position.cpp",
       "to": "problems/0035-search-insert-position/solution.cpp",
-      "sha256": "ad95b8981b0f2a551811d16d4d53dc8bbc16bbf7ae38e5c100abbc15a7430678"
+      "sha256": "257d9ec0f182e5615cdbb366c0ad620cfaca0a11a4a98a8a18a1c9ef0493bc97"
     },
     {
       "from": "array/59 Spiral Matrix II.cpp",
       "to": "problems/0059-spiral-matrix-ii/solution.cpp",
-      "sha256": "455563f3b0ea54ebecb7236f0568d1b7b9ae82c6b5c42898f73fa5206a8ecf3b"
+      "sha256": "467eec7f258490b427a530635fc8eae9126528e63c760ecc2d8eac599af0666a"
     },
     {
       "from": "linkedlist/203 Remove the linked list element.cpp",
       "to": "problems/0203-remove-linked-list-elements/solution.cpp",
-      "sha256": "1813ce0682b974d2cd70702da37dc75f6702a383eea0382d4750c4cba86c4821"
+      "sha256": "3af9c56e6f8b4176fe6b0196da2c7a00f5cd9244f96c39a7b1907acea84e1a65"
     },
     {
       "from": "array/209 Minimum Size Subarray Sum.cpp",
       "to": "problems/0209-minimum-size-subarray-sum/solution.cpp",
-      "sha256": "01a7c240eccbafc4081e634889f394438658200e5a3a53a71be19de00dd4ff41"
+      "sha256": "f9e9616f37d6c6ac49c7fa5424a0d880620e1c3ba60da77c8fdbd492eee1eaa0"
     },
     {
       "from": "array/704 binary search.cpp",
       "to": "problems/0704-binary-search/solution.cpp",
-      "sha256": "7c04ad3f348cb9815b92ff1bca2a5d43c8a62926c859444fa6685d9411e93260"
+      "sha256": "828a17766758996f1cc4540ebba586e2287125b38dc6330fb4d2a1a34e674c6c"
     },
     {
       "from": "array/977 Squares of a Sorted Array.cpp",
       "to": "problems/0977-squares-of-a-sorted-array/solution.cpp",
-      "sha256": "f21e7a4b86cc8797df419b13bf59d5c291dda62be0f8cc5254178911127392bd"
+      "sha256": "e72c58ae4d29aa247f0040feca520f643282f479c4113b82805721e89a7b1262"
     }
   ],
   "removed_empty_placeholders": [

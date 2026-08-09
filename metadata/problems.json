@@ -1,5 +1,15 @@
 {
   "schema_version": 1,
+  "repository_mode": "real_records",
+  "language_policy": {
+    "allowed_languages": [
+      "cpp"
+    ],
+    "automatic_verified_sources": [
+      "leethub"
+    ],
+    "require_extension_match": true
+  },
   "problems": [
     {
       "id": 26,
@@ -23,8 +33,8 @@
         "kind": "legacy_repository",
         "original_path": "array/26 Remove Duplicates from Sorted Array.cpp",
         "commit": "8354919ddff2eed44fff99a6f2abf7c9d78654d5",
-        "bytes": 293,
-        "sha256": "06f52dfde43c774729132ef72a91ecdb92962fbe683ce79963ca357616cf4c05"
+        "bytes": 281,
+        "sha256": "276974c0049c2e7c17bc4a11e947bdbbc147a3884614526184c0e0025b8530e4"
       },
       "analysis": {
         "approach": "用 slow 指向当前去重结果的末尾，顺序扫描并把新值原地写回。",
@@ -56,8 +66,8 @@
         "kind": "legacy_repository",
         "original_path": "array/27 Remove Element.cpp",
         "commit": "8354919ddff2eed44fff99a6f2abf7c9d78654d5",
-        "bytes": 278,
-        "sha256": "485bf852a2c5f607a668a4ae3cddd96547d1fc221d5d94f000a6929394647eb7"
+        "bytes": 266,
+        "sha256": "806d0ea84e6a99b78ce145d841757f9ca8750ffa9a4adc93a9ad04fcce7886e1"
       },
       "analysis": {
         "approach": "fast 扫描输入，遇到不等于 val 的元素就写到 slow 位置并推进 slow。",
@@ -89,8 +99,8 @@
         "kind": "legacy_repository",
         "original_path": "array/35 Search Insert Position.cpp",
         "commit": "8354919ddff2eed44fff99a6f2abf7c9d78654d5",
-        "bytes": 448,
-        "sha256": "ad95b8981b0f2a551811d16d4d53dc8bbc16bbf7ae38e5c100abbc15a7430678"
+        "bytes": 430,
+        "sha256": "257d9ec0f182e5615cdbb366c0ad620cfaca0a11a4a98a8a18a1c9ef0493bc97"
       },
       "analysis": {
         "approach": "在闭区间 [left, right] 上二分；未命中时 left 正好落在插入位置。",
@@ -140,8 +150,8 @@
         "kind": "legacy_repository",
         "original_path": "array/59 Spiral Matrix II.cpp",
         "commit": "8354919ddff2eed44fff99a6f2abf7c9d78654d5",
-        "bytes": 630,
-        "sha256": "455563f3b0ea54ebecb7236f0568d1b7b9ae82c6b5c42898f73fa5206a8ecf3b"
+        "bytes": 593,
+        "sha256": "467eec7f258490b427a530635fc8eae9126528e63c760ecc2d8eac599af0666a"
       },
       "analysis": {
         "approach": "维护 left/right/top/bottom 四条边，按层顺时针填入递增数字。",
@@ -173,8 +183,8 @@
         "kind": "legacy_repository",
         "original_path": "linkedlist/203 Remove the linked list element.cpp",
         "commit": "8354919ddff2eed44fff99a6f2abf7c9d78654d5",
-        "bytes": 733,
-        "sha256": "1813ce0682b974d2cd70702da37dc75f6702a383eea0382d4750c4cba86c4821"
+        "bytes": 703,
+        "sha256": "3af9c56e6f8b4176fe6b0196da2c7a00f5cd9244f96c39a7b1907acea84e1a65"
       },
       "analysis": {
         "approach": "增加 dummy 头结点统一处理删除头结点和中间结点，遍历时直接绕过目标值结点。",
@@ -208,8 +218,8 @@
         "kind": "legacy_repository",
         "original_path": "array/209 Minimum Size Subarray Sum.cpp",
         "commit": "8354919ddff2eed44fff99a6f2abf7c9d78654d5",
-        "bytes": 421,
-        "sha256": "01a7c240eccbafc4081e634889f394438658200e5a3a53a71be19de00dd4ff41"
+        "bytes": 405,
+        "sha256": "f9e9616f37d6c6ac49c7fa5424a0d880620e1c3ba60da77c8fdbd492eee1eaa0"
       },
       "analysis": {
         "approach": "right 扩张窗口累加；当窗口和达到 target 时持续移动 left，记录最短长度。",
@@ -241,8 +251,8 @@
         "kind": "legacy_repository",
         "original_path": "array/704 binary search.cpp",
         "commit": "4cb36bd86843690ad28da91199449566160bf5fe",
-        "bytes": 484,
-        "sha256": "7c04ad3f348cb9815b92ff1bca2a5d43c8a62926c859444fa6685d9411e93260"
+        "bytes": 467,
+        "sha256": "828a17766758996f1cc4540ebba586e2287125b38dc6330fb4d2a1a34e674c6c"
       },
       "analysis": {
         "approach": "在有序数组的闭区间上二分，命中返回下标，区间为空时返回 -1。",
@@ -275,8 +285,8 @@
         "kind": "legacy_repository",
         "original_path": "array/977 Squares of a Sorted Array.cpp",
         "commit": "8354919ddff2eed44fff99a6f2abf7c9d78654d5",
-        "bytes": 529,
-        "sha256": "f21e7a4b86cc8797df419b13bf59d5c291dda62be0f8cc5254178911127392bd"
+        "bytes": 508,
+        "sha256": "e72c58ae4d29aa247f0040feca520f643282f479c4113b82805721e89a7b1262"
       },
       "analysis": {
         "approach": "比较左右端平方值，把较大的一个从结果数组末尾向前填充。",

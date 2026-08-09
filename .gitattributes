@@ -6,6 +6,12 @@
 .githooks/* text eol=lf
 *.cmd text eol=crlf
 
+# Automation and isolated fixtures are not LeetCode solution languages.
+scripts/** linguist-vendored
+tests/** linguist-vendored
+.githooks/** linguist-vendored
+*.cmd linguist-vendored
+
 # Accepted submissions are byte-preserved; never normalize their line endings.
 problems/**/solution.* -text
 problems/**/submissions/** -text

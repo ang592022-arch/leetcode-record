@@ -9,6 +9,8 @@
 - 已存在的 `solution.<ext>` 与新提交内容不同时，不得覆盖。把新版本保存到同题目录的 `submissions/`，使用不会冲突的时间戳文件名，并在 metadata 中记录两者。
 - AI 建议的代码只能放在 `optimized.<ext>`，文件开头必须明确写明“Codex 优化版本”；它永远不能计作用户原始答案。
 - 没有 Accepted 事件、提交记录或用户明确确认时，不得把任意代码标记为已验证 Accepted。历史导入应使用 `unverified_historical_import`。
+- 编程语言是原始 submission 的一部分。禁止把 Python 改写、改名或伪装成 C++，也禁止反向转换；metadata 语言、文件扩展名与原始来源必须一致。
+- GitHub Action 只能原样移动或复制经过验证的 submission 字节，不得翻译语言、格式化代码或仅因扩展名/metadata 冲突而猜测语言。
 
 ## 单一目录与分类
 
@@ -34,6 +36,8 @@
 - 只有实际存在内容时才创建 `notes.md`、`optimized.<ext>` 或相似题列表；不要生成模板式空章节。
 - Easy 题说明保持简洁。任何复杂度、易错点和改进建议都应基于实际代码，而不是通用题解套话。
 - metadata 应保留稳定的题号、slug、Topics、路径和哈希，以便未来生成 `[[LC20 有效的括号]]`、`[[栈]]` 等 Obsidian 双链。
+- Solved、难度和语言统计只计算具有允许来源证据的 verified Accepted；历史未验证代码可以展示，但不得计入 Solved。
+- 自动化脚本与测试 fixture 必须保存在 `scripts/`、`tests/` 或临时仓库，禁止写入真实 `problems/`、metadata 或 Solved 统计。
 
 ## Obsidian 增量同步
 
