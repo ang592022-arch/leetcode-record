@@ -322,7 +322,21 @@ def scan_leetcode_notes(vault: Path) -> Tuple[Dict[str, Path], Dict[Path, str]]:
     return notes, contents
 
 
-def validate_problem_note(vault: Path, path: Path, snapshot: Mapping[str, Any]) -> None:
+def expected_verification(snapshot: Mapping[str, Any]) -> str:
+    acceptance_status = str(snapshot.get("acceptance", {}).get("status", ""))
+    if acceptance_status == "verified":
+        return "verified"
+    if acceptance_status == "unverified_historical_import":
+        return "historical-unverified"
+    return "unverified"
+
+
+def validate_problem_note(
+    vault: Path,
+    path: Path,
+    snapshot: Mapping[str, Any],
+    source_commit: Optional[str] = None,
+) -> None:
     text = path.read_text(encoding="utf-8-sig")
     properties = parse_frontmatter(text)
     problem_id = str(snapshot["id"])
@@ -336,6 +350,13 @@ def validate_problem_note(vault: Path, path: Path, snapshot: Mapping[str, Any]) 
         raise SyncError(f"LC{problem_id} review 必须明确为 true 或 false")
     if properties.get("difficulty") != snapshot.get("difficulty"):
         raise SyncError(f"LC{problem_id} difficulty 与 metadata 不一致")
+    if properties.get("language") != snapshot.get("language"):
+        raise SyncError(f"LC{problem_id} language 与 metadata 不一致")
+    verification = expected_verification(snapshot)
+    if properties.get("verification") != verification:
+        raise SyncError(f"LC{problem_id} verification 必须是 {verification}")
+    if source_commit is not None and properties.get("source_commit") != source_commit:
+        raise SyncError(f"LC{problem_id} source_commit 与 checkpoint 来源不一致")
     required_sections = ("## 我的代码", "## Codex 对代码的解释", "## 复杂度", "## 易错点", "## 关联")
     missing = [section for section in required_sections if section not in text]
     if missing:
@@ -394,7 +415,7 @@ def finalize(repo: Path, vault: Path) -> MutableMapping[str, Any]:
         note = notes.get(problem_id)
         if note is None:
             raise SyncError(f"LC{problem_id} 尚无 Obsidian 算法笔记")
-        validate_problem_note(vault, note, snapshot)
+        validate_problem_note(vault, note, snapshot, str(pending["source_commit"]))
         state["problems"][problem_id] = {
             "note": note.relative_to(vault).as_posix(),
             "source_commit": pending["source_commit"],
@@ -430,7 +451,7 @@ def validate(repo: Path, vault: Path) -> None:
         snapshot = snapshots.get(problem_id)
         if snapshot is None:
             continue
-        validate_problem_note(vault, note, snapshot)
+        validate_problem_note(vault, note, snapshot, str(record.get("source_commit", "")))
         if record.get("note") != note.relative_to(vault).as_posix():
             raise SyncError(f"LC{problem_id} checkpoint 的 note 路径过期")
     validate_wikilinks(vault, contents)

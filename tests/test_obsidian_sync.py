@@ -102,13 +102,17 @@ class IncrementalObsidianSyncTest(unittest.TestCase):
     def write_note(self) -> None:
         note = self.vault / "学习" / "算法" / "LeetCode" / "LC42 答案.md"
         note.parent.mkdir(parents=True)
+        source_commit = git(self.repo, "rev-parse", "HEAD")
         note.write_text(
-            """---
+            f"""---
 type: leetcode
 leetcode_id: 42
 status: solved
 review: false
 difficulty: easy
+language: cpp
+verification: verified
+source_commit: {source_commit}
 ---
 
 # LC42 答案
@@ -172,6 +176,17 @@ difficulty: easy
         git(self.vault, "remote", "add", "origin", str(Path(self.temporary.name) / "remote.git"))
         with self.assertRaises(SYNC.SyncError):
             SYNC.prepare(self.repo, self.vault, pull=False)
+
+    def test_wrong_verification_is_rejected(self) -> None:
+        SYNC.prepare(self.repo, self.vault, pull=False)
+        self.write_note()
+        note = self.vault / "学习" / "算法" / "LeetCode" / "LC42 答案.md"
+        note.write_text(
+            note.read_text(encoding="utf-8").replace("verification: verified", "verification: historical-unverified"),
+            encoding="utf-8",
+        )
+        with self.assertRaises(SYNC.SyncError):
+            SYNC.finalize(self.repo, self.vault)
 
 
 if __name__ == "__main__":

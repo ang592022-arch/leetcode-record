@@ -65,7 +65,7 @@
 ## 敏感信息与自动化安全
 
 - 禁止提交 API key、token、密码、Cookie、LeetCode Session、`csrftoken`、`cf_clearance`、浏览器配置、`.env` 或私人文件。
-- 每次 commit 前运行 `scripts/security_scan.py`；命中高置信度秘密时停止，不得自行降级或忽略。
+- 每次 commit 前运行 `python scripts/leetcode_repo.py scan`；命中高置信度秘密时停止，不得自行降级或忽略。
 - 浏览器扩展若需要 GitHub 权限，只允许写入指定仓库；开启避免覆盖同题文件的时间戳/后缀设置。
 - 不从浏览器 Cookie/Session 存储中导出认证信息。需要身份验证时使用扩展自身 OAuth 或用户主动提供的安全登录流程。
 
