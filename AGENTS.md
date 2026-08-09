@@ -35,6 +35,13 @@
 - Easy 题说明保持简洁。任何复杂度、易错点和改进建议都应基于实际代码，而不是通用题解套话。
 - metadata 应保留稳定的题号、slug、Topics、路径和哈希，以便未来生成 `[[LC20 有效的括号]]`、`[[栈]]` 等 Obsidian 双链。
 
+## Obsidian 增量同步
+
+- 用户说“同步一下今天的题。”时，先运行 `sync-obsidian.cmd prepare`。脚本只用 `pull --ff-only` 更新本仓库，并依据 `.leetcode-sync/state.json` 找出新增或实际变化的题目。
+- 只读取待同步题目的 metadata、真实代码，以及 Vault 中直接相关的算法笔记、知识点和索引；禁止扫描日记或无关知识区。
+- Codex 完成语义笔记后运行 `sync-obsidian.cmd finalize` 和 `sync-obsidian.cmd validate`，再检查 diff 并只在 Obsidian 创建本地 commit。Vault 不得添加 remote 或 push。
+- `scripts/obsidian_sync.py` 只负责检测、checkpoint 和基础校验，不得生成臆测性的题解，也不得改写任何 `solution.*`。
+
 ## Git 提交规范
 
 - 新增一道题：`solve: LC20 Valid Parentheses`
