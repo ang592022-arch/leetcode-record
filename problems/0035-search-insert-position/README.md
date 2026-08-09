@@ -5,7 +5,7 @@
 - 难度：Easy
 - Topics：Array、Binary Search
 - 主分类：Binary Search
-- 验证状态：历史导入，Accepted 状态待验证
+- 验证状态：已验证 Accepted
 
 ## 我的代码
 

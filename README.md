@@ -4,7 +4,7 @@
 
 保存本人原始 LeetCode 解答与简洁学习记录。`solution.*` 永不被自动化覆盖；AI 建议只会独立存放。
 
-Solved: **8**（Verified: **0**，Unverified: **8**）
+Solved: **8**（Verified: **1**，Unverified: **7**）
 
 Easy: **6** · Medium: **2** · Hard: **0**
 
@@ -23,7 +23,7 @@ Easy: **6** · Medium: **2** · Hard: **0**
 
 | ID | Problem | Difficulty | Status | Solution |
 | --: | --- | --- | --- | --- |
-| 35 | [搜索插入位置 / Search Insert Position](problems/0035-search-insert-position/README.md) | Easy | unverified | [code](problems/0035-search-insert-position/solution.cpp) |
+| 35 | [搜索插入位置 / Search Insert Position](problems/0035-search-insert-position/README.md) | Easy | verified | [code](problems/0035-search-insert-position/solution.cpp) |
 | 704 | [二分查找 / Binary Search](problems/0704-binary-search/README.md) | Easy | unverified | [code](problems/0704-binary-search/solution.cpp) |
 
 ## Linked List

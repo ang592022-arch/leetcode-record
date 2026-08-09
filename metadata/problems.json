@@ -7,7 +7,10 @@
       "title": "Remove Duplicates from Sorted Array",
       "title_zh": "删除有序数组中的重复项",
       "difficulty": "Easy",
-      "topics": ["Array", "Two Pointers"],
+      "topics": [
+        "Array",
+        "Two Pointers"
+      ],
       "primary_topic": "Array",
       "language": "cpp",
       "solution": "problems/0026-remove-duplicates-from-sorted-array/solution.cpp",
@@ -37,7 +40,10 @@
       "title": "Remove Element",
       "title_zh": "移除元素",
       "difficulty": "Easy",
-      "topics": ["Array", "Two Pointers"],
+      "topics": [
+        "Array",
+        "Two Pointers"
+      ],
       "primary_topic": "Array",
       "language": "cpp",
       "solution": "problems/0027-remove-element/solution.cpp",
@@ -67,13 +73,16 @@
       "title": "Search Insert Position",
       "title_zh": "搜索插入位置",
       "difficulty": "Easy",
-      "topics": ["Array", "Binary Search"],
+      "topics": [
+        "Array",
+        "Binary Search"
+      ],
       "primary_topic": "Binary Search",
       "language": "cpp",
       "solution": "problems/0035-search-insert-position/solution.cpp",
       "acceptance": {
-        "status": "unverified_historical_import",
-        "source": "existing repository history",
+        "status": "verified",
+        "source": "git:LeetHub commit",
         "note": "No LeetCode submission receipt was available during migration."
       },
       "source": {
@@ -89,7 +98,24 @@
         "space_complexity": "O(1)",
         "pitfalls": "闭区间模板要求循环条件为 left <= right，并在两侧都跳过 mid。",
         "author": "Codex"
-      }
+      },
+      "submissions": [
+        {
+          "path": "problems/0035-search-insert-position/submissions/257d9ec0f182.cpp",
+          "language": "cpp",
+          "acceptance": {
+            "status": "verified",
+            "source": "git:LeetHub commit"
+          },
+          "source": {
+            "kind": "leethub",
+            "original_path": "0035-search-insert-position/0035-search-insert-position.cpp",
+            "commit": "06368d3e73729b332c79e8cf726e4b957369a643",
+            "sha256": "257d9ec0f182e5615cdbb366c0ad620cfaca0a11a4a98a8a18a1c9ef0493bc97"
+          },
+          "sha256": "257d9ec0f182e5615cdbb366c0ad620cfaca0a11a4a98a8a18a1c9ef0493bc97"
+        }
+      ]
     },
     {
       "id": 59,
@@ -97,7 +123,11 @@
       "title": "Spiral Matrix II",
       "title_zh": "螺旋矩阵 II",
       "difficulty": "Medium",
-      "topics": ["Array", "Matrix", "Simulation"],
+      "topics": [
+        "Array",
+        "Matrix",
+        "Simulation"
+      ],
       "primary_topic": "Simulation",
       "language": "cpp",
       "solution": "problems/0059-spiral-matrix-ii/solution.cpp",
@@ -127,7 +157,10 @@
       "title": "Remove Linked List Elements",
       "title_zh": "移除链表元素",
       "difficulty": "Easy",
-      "topics": ["Linked List", "Recursion"],
+      "topics": [
+        "Linked List",
+        "Recursion"
+      ],
       "primary_topic": "Linked List",
       "language": "cpp",
       "solution": "problems/0203-remove-linked-list-elements/solution.cpp",
@@ -157,7 +190,12 @@
       "title": "Minimum Size Subarray Sum",
       "title_zh": "长度最小的子数组",
       "difficulty": "Medium",
-      "topics": ["Array", "Binary Search", "Sliding Window", "Prefix Sum"],
+      "topics": [
+        "Array",
+        "Binary Search",
+        "Sliding Window",
+        "Prefix Sum"
+      ],
       "primary_topic": "Sliding Window",
       "language": "cpp",
       "solution": "problems/0209-minimum-size-subarray-sum/solution.cpp",
@@ -187,7 +225,10 @@
       "title": "Binary Search",
       "title_zh": "二分查找",
       "difficulty": "Easy",
-      "topics": ["Array", "Binary Search"],
+      "topics": [
+        "Array",
+        "Binary Search"
+      ],
       "primary_topic": "Binary Search",
       "language": "cpp",
       "solution": "problems/0704-binary-search/solution.cpp",
@@ -217,7 +258,11 @@
       "title": "Squares of a Sorted Array",
       "title_zh": "有序数组的平方",
       "difficulty": "Easy",
-      "topics": ["Array", "Two Pointers", "Sorting"],
+      "topics": [
+        "Array",
+        "Two Pointers",
+        "Sorting"
+      ],
       "primary_topic": "Two Pointers",
       "language": "cpp",
       "solution": "problems/0977-squares-of-a-sorted-array/solution.cpp",
