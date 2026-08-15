@@ -230,6 +230,34 @@
       }
     },
     {
+      "id": 347,
+      "slug": "top-k-frequent-elements",
+      "title": "top k frequent elements",
+      "title_zh": "top k frequent elements",
+      "difficulty": "Unknown",
+      "topics": [],
+      "primary_topic": "uncategorized",
+      "language": "cpp",
+      "solution": "problems/0347-top-k-frequent-elements/solution.cpp",
+      "acceptance": {
+        "status": "verified",
+        "source": "git:LeetHub commit"
+      },
+      "source": {
+        "kind": "leethub",
+        "original_path": "0347-top-k-frequent-elements/0347-top-k-frequent-elements.cpp",
+        "commit": "f03fd498ff2c819d707efc596dacd23d6445d729",
+        "sha256": "380ed7001194ddbd39435b65b1bd756f3d70258ea980fd65c74b1d53b5735094"
+      },
+      "analysis": {
+        "approach": "",
+        "time_complexity": "",
+        "space_complexity": "",
+        "pitfalls": [],
+        "author": "Codex"
+      }
+    },
+    {
       "id": 704,
       "slug": "binary-search",
       "title": "Binary Search",

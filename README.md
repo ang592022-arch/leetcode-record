@@ -4,7 +4,7 @@
 
 保存本人原始 LeetCode 解答与简洁学习记录。`solution.*` 永不被自动化覆盖；AI 建议只会独立存放。
 
-Verified Accepted / Solved: **1**
+Verified Accepted / Solved: **2**
 
 Historical or unverified records（不计入 Solved）: **7**
 
@@ -53,3 +53,9 @@ Accepted language policy: **cpp**
 | ID | Problem | Language | Difficulty | Status | Solution |
 | --: | --- | --- | --- | --- | --- |
 | 977 | [有序数组的平方 / Squares of a Sorted Array](problems/0977-squares-of-a-sorted-array/README.md) | cpp | Easy | historical/unverified | [code](problems/0977-squares-of-a-sorted-array/solution.cpp) |
+
+## Uncategorized
+
+| ID | Problem | Language | Difficulty | Status | Solution |
+| --: | --- | --- | --- | --- | --- |
+| 347 | [top k frequent elements / top k frequent elements](problems/0347-top-k-frequent-elements/README.md) | cpp | Unknown | verified | [code](problems/0347-top-k-frequent-elements/solution.cpp) |
